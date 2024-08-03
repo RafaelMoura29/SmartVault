@@ -29,7 +29,7 @@ namespace SmartVault.DataGeneration
                 connection.Open();
                 
                 CreateTables(connection);
-                GenereteFakeDataAsync(connectionString);
+                GenereteFakeDataAsync(connection);
 
                 var accountData = connection.Query("SELECT COUNT(*) FROM Account;");
                 Console.WriteLine($"AccountCount: {JsonConvert.SerializeObject(accountData)}");
@@ -40,20 +40,25 @@ namespace SmartVault.DataGeneration
             }
         }
 
-        private static void GenereteFakeDataAsync(string connectionString)
+        private static void GenereteFakeDataAsync(SQLiteConnection connection)
         {
             var documentPath = new FileInfo("TestDoc.txt").FullName;
             var fileLength = new FileInfo(documentPath).Length;
             var randomDayIterator = RandomDay().GetEnumerator();
 
-            Parallel.For(0, 100, userId =>
+            using (var transaction = connection.BeginTransaction())
             {
-                randomDayIterator.MoveNext();
-                GenerateDocuments(connectionString,  userId, documentPath, fileLength, randomDayIterator.Current);
-            });
+                Parallel.For(0, 100, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, userId =>
+                {
+                    randomDayIterator.MoveNext();
+                    GenerateDocuments(connection, userId, documentPath, fileLength, randomDayIterator.Current);
+                });
+
+                transaction.Commit();
+            }
         }
 
-        private static void GenerateDocuments(string connectionString, int userId, string documentPath, long fileLength, DateTime birthDate)
+        private static void GenerateDocuments(SQLiteConnection connection, int userId, string documentPath, long fileLength, DateTime birthDate)
         {
             var query = new StringBuilder();
             query.Append($"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password) VALUES('{userId}','FName{userId}','LName{userId}','{birthDate:yyyy-MM-dd}','{userId}','UserName-{userId}','e10adc3949ba59abbe56e057f20f883e');");
@@ -74,16 +79,7 @@ namespace SmartVault.DataGeneration
                             FROM sequence;
             ");
 
-            using (var connection = new SQLiteConnection(connectionString))
-            {
-                connection.Open();
-
-                using (var transaction = connection.BeginTransaction())
-                {
-                    connection.Execute(query.ToString());
-                    transaction.Commit();
-                }
-            }
+            connection.Execute(query.ToString());
 
             query.Clear();
         }
