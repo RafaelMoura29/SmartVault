@@ -42,22 +42,25 @@ namespace SmartVault.DataGeneration
         {
             var documentNumber = 0;
             var documentPath = new FileInfo("TestDoc.txt").FullName;
+            var fileLength = new FileInfo(documentPath).Length;
+            var query = new StringBuilder();
+            var randomDayIterator = RandomDay().GetEnumerator();
+
             for (int i = 0; i < 100; i++)
             {
-                var randomDayIterator = RandomDay().GetEnumerator();
                 randomDayIterator.MoveNext();
-                var query = new StringBuilder();
 
-                query.Append($"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password) VALUES('{i}','FName{i}','LName{i}','{randomDayIterator.Current.ToString("yyyy-MM-dd")}','{i}','UserName-{i}','e10adc3949ba59abbe56e057f20f883e');");
+                query.Append($"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password) VALUES('{i}','FName{i}','LName{i}','{randomDayIterator.Current:yyyy-MM-dd}','{i}','UserName-{i}','e10adc3949ba59abbe56e057f20f883e');");
                 query.Append($"INSERT INTO Account (Id, Name) VALUES('{i}','Account{i}');");
                 query.Append($"INSERT INTO Document (Id, Name, FilePath, Length, AccountId) VALUES");
 
                 for (int d = 0; d < 10000; d++, documentNumber++)
                 {
-                    query.Append($"('{documentNumber}','Document{i}-{d}.txt','{documentPath}','{new FileInfo(documentPath).Length}','{i}')," );
+                    query.Append($"('{documentNumber}','Document{i}-{d}.txt','{documentPath}','{fileLength}','{i}')," );
                 }
-
                 query.Length--;
+                query.Append(';');
+
                 connection.Execute(query.ToString());
                 query.Clear();
             }
