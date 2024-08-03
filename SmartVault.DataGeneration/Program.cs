@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using SmartVault.Library;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SQLite;
 using System.IO;
 using System.Text;
@@ -22,12 +23,13 @@ namespace SmartVault.DataGeneration
 
             SQLiteConnection.CreateFile(configuration["DatabaseFileName"]);
             File.WriteAllText("TestDoc.txt", $"This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}This is my test document{Environment.NewLine}");
-
-            using (var connection = new SQLiteConnection(string.Format(configuration?["ConnectionStrings:DefaultConnection"] ?? "", configuration?["DatabaseFileName"], ";Mode=ReadWrite;Pooling=True;")))
+            var connectionString = string.Format(configuration?["ConnectionStrings:DefaultConnection"] ?? "", configuration?["DatabaseFileName"], ";Mode=ReadWrite;Pooling=True;");
+            using (var connection = new SQLiteConnection(connectionString))
             {
-                CreateTables(connection);
+                connection.Open();
                 
-                GenereteFakeDataAsync(connection);
+                CreateTables(connection);
+                GenereteFakeDataAsync(connectionString);
 
                 var accountData = connection.Query("SELECT COUNT(*) FROM Account;");
                 Console.WriteLine($"AccountCount: {JsonConvert.SerializeObject(accountData)}");
@@ -38,32 +40,52 @@ namespace SmartVault.DataGeneration
             }
         }
 
-        private static void GenereteFakeDataAsync(SQLiteConnection connection)
+        private static void GenereteFakeDataAsync(string connectionString)
         {
-            var documentNumber = 0;
             var documentPath = new FileInfo("TestDoc.txt").FullName;
             var fileLength = new FileInfo(documentPath).Length;
-            var query = new StringBuilder();
             var randomDayIterator = RandomDay().GetEnumerator();
 
-            for (int i = 0; i < 100; i++)
+            Parallel.For(0, 100, userId =>
             {
                 randomDayIterator.MoveNext();
+                GenerateDocuments(connectionString,  userId, documentPath, fileLength, randomDayIterator.Current);
+            });
+        }
 
-                query.Append($"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password) VALUES('{i}','FName{i}','LName{i}','{randomDayIterator.Current:yyyy-MM-dd}','{i}','UserName-{i}','e10adc3949ba59abbe56e057f20f883e');");
-                query.Append($"INSERT INTO Account (Id, Name) VALUES('{i}','Account{i}');");
-                query.Append($"INSERT INTO Document (Id, Name, FilePath, Length, AccountId) VALUES");
+        private static void GenerateDocuments(string connectionString, int userId, string documentPath, long fileLength, DateTime birthDate)
+        {
+            var query = new StringBuilder();
+            query.Append($"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password) VALUES('{userId}','FName{userId}','LName{userId}','{birthDate:yyyy-MM-dd}','{userId}','UserName-{userId}','e10adc3949ba59abbe56e057f20f883e');");
+            query.Append($"INSERT INTO Account (Id, Name) VALUES('{userId}','Account{userId}');");
 
-                for (int d = 0; d < 10000; d++, documentNumber++)
+            query.Append(@$"WITH RECURSIVE
+                            sequence(x) AS (
+                                SELECT 0
+                                UNION ALL
+                                SELECT x + 1 FROM sequence WHERE x < 9999
+                            )
+                            INSERT INTO Document (Name, FilePath, Length, AccountId)
+                            SELECT 
+                                'Document' || {userId} || '-' || x || '.txt' AS Name,
+                                '{documentPath}' AS FilePath,
+                                '{fileLength}' AS Length,
+                                '{userId}' AS AccountId
+                            FROM sequence;
+            ");
+
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+
+                using (var transaction = connection.BeginTransaction())
                 {
-                    query.Append($"('{documentNumber}','Document{i}-{d}.txt','{documentPath}','{fileLength}','{i}')," );
+                    connection.Execute(query.ToString());
+                    transaction.Commit();
                 }
-                query.Length--;
-                query.Append(';');
-
-                connection.Execute(query.ToString());
-                query.Clear();
             }
+
+            query.Clear();
         }
 
         private static void CreateTables(SQLiteConnection connection)
@@ -79,7 +101,8 @@ namespace SmartVault.DataGeneration
 
             connection.Execute(query.ToString());
         }
-        static IEnumerable<DateTime> RandomDay()
+
+        static IEnumerable<DateTime> RandomDay()
         {
             DateTime start = new DateTime(1985, 1, 1);
             Random gen = new Random();

@@ -9,7 +9,7 @@
 	</propertyGroup>
 	<script>
 		CREATE TABLE Document (
-			Id INTEGER PRIMARY KEY,
+			Id INTEGER PRIMARY KEY AUTOINCREMENT,
 			Name TEXT,
 			FilePath TEXT,
 			Length INTEGER,
