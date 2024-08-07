@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using SmartVault.Program.BusinessObjects;
 using SmartVault.Shared.Configuration;
-using SmartVault.Shared.Data;
 using System;
 using System.Collections.Concurrent;
 using System.Data.SQLite;
@@ -13,15 +12,13 @@ namespace SmartVault.Program
 {
     partial class Program
     {
-        private static IDbContext _context;
-        private static IAppSettings _settings;
-        private static SQLiteConnection _connection;
+        private readonly static SQLiteConnection _connection;
+        private readonly static IAppSettings _settings;
 
         static Program()
         {
-            _context = new DbContext();
+            _connection = new DbContext().GetConnection();
             _settings = new AppSettings();
-            _connection = _context.GetConnection();
         }
 
         static void Main(string[] args)
@@ -38,7 +35,7 @@ namespace SmartVault.Program
 
         private static void GetAllFileSizes()
         {
-            long totalFileSize = 0;
+            long totalFilesSize = 0;
             var filesSize = new ConcurrentDictionary<string, long>(StringComparer.Ordinal);
 
             var documents = _connection.Query<Document>("select FilePath from Document;");
@@ -46,17 +43,17 @@ namespace SmartVault.Program
             {
                 if (filesSize.TryGetValue(document.FilePath, out long fileSize))
                 {
-                    totalFileSize += fileSize;
+                    totalFilesSize += fileSize;
                 }
                 else
                 {
                     var file = new FileInfo(document.FilePath);
                     filesSize.AddOrUpdate(document.FilePath, file.Length, (x, s) => s = file.Length);
-                    totalFileSize += file.Length;
+                    totalFilesSize += file.Length;
                 }
              }
 
-            Console.WriteLine($"Total files size: {totalFileSize} bytes");
+            Console.WriteLine($"GetAllFileSizes: Total files size - {totalFilesSize} Bytes");
         }
 
         private static void WriteEveryThirdFileToFile(string accountId)
@@ -66,13 +63,13 @@ namespace SmartVault.Program
                 
             foreach (var document in documents)
             {
-                var file = new FileInfo(document.FilePath);
-                string fileContent = File.ReadAllText(file.FullName);
+                string fileContent = File.ReadAllText(document.FilePath);
 
                 content.Append(fileContent);
             }
 
             File.WriteAllText(string.Format(_settings.OutputFilePath, accountId), content.ToString());
+            Console.WriteLine($"WriteEveryThirdFileToFile: Executed successfully");
         }
     }
 }

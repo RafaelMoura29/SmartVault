@@ -23,6 +23,7 @@ namespace SmartVault.DataGeneration
         {
             _context = new DbContext();
             _settings = new AppSettings();
+            _context.InitDatabase();
             _connection = _context.GetConnection();
         }
 

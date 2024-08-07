@@ -1,23 +1,31 @@
 ﻿using SmartVault.Shared.Configuration;
+using System;
 using System.Data.SQLite;
-using System.IO;
 
 namespace SmartVault.Shared.Data
 {
     public class DbContext : IDbContext
     {
-        public readonly IAppSettings Settings;
-        private readonly SQLiteConnection _connection;
+        public readonly IAppSettings _settings;
+        private SQLiteConnection _connection;
 
         public DbContext()
         {
-            Settings = new AppSettings();
-            var a = Path.GetFullPath(Settings.DatabaseFileName);
-            _connection = new SQLiteConnection(Settings.DefaultConnection);
+            _settings = new AppSettings();
+        }
+
+        public void InitDatabase()
+        {
+            SQLiteConnection.CreateFile(_settings.DatabaseFileName);
         }
 
         public SQLiteConnection GetConnection()
         {
+            if (_connection is null)
+            {
+                _connection = new SQLiteConnection(_settings.DefaultConnection);
+            }
+
             if (_connection.State != System.Data.ConnectionState.Open)
             {
                 _connection.Open();

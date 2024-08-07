@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SmartVault.Program": {
+      "commandName": "Project",
+      "commandLineArgs": "1"
+    }
+  }
+}

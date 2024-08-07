@@ -5,6 +5,7 @@ namespace SmartVault.Shared.Data
 {
     public interface IDbContext : IDisposable
     {
+        void InitDatabase();
         SQLiteConnection GetConnection();
     }
 }

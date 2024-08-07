@@ -13,11 +13,10 @@ namespace SmartVault.CodeGeneration
         {
             // Find the main method
             var mainMethod = context.Compilation.GetEntryPoint(context.CancellationToken);
-
+            
             // Build up the source code
-            for (int i = 0; i < 3; i++)
+            foreach (var file in context.AdditionalFiles)
             {
-                var file = context.AdditionalFiles[i];
                 var fileContents = file.GetText().ToString();
 
                 var serializer = new XmlSerializer(typeof(BusinessObject));
