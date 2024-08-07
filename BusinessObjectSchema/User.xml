@@ -17,7 +17,8 @@
 			DateOfBirth TEXT,
 			AccountId INTEGER,
 			Username TEXT,
-			Password TEXT
+			Password TEXT,
+			CreatedOn DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 	</script>
 </businessObject>

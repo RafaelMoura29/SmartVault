@@ -20,9 +20,9 @@ This project will be used to fulfill some of the requirements that require outpu
 
 # Requirements
 
-1. Speed up the execution of the SmartVault.DataGeneration tool. Developers have complained that this takes a long time to create a test database.
+1. Speed up the execution of the SmartVault.DataGeneration tool. Developers have complained that this takes a long time to create a test database. - OK
 
-2. All business objects should have a created on date.
+2. All business objects should have a created on date. - OK
 
 3. Implement a way to output the contents of every third file of an account to a single file, if the file contains the text "Smith Property".
 
@@ -30,7 +30,7 @@ This project will be used to fulfill some of the requirements that require outpu
 
 5. Add a new business object to support OAuth integrations (No need to implement an actual OAuth integration, just the boilerplate necessary in the given application)
 
-6. Commit your code to a github repository and share the link back with us
+6. Commit your code to a github repository and share the link back with us - OK
 
 # Guidelines
 

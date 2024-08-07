@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SmartVault.CodeGeneration\SmartVault.CodeGeneration.csproj" />
+    <ProjectReference Include="..\SmartVault.Shared\SmartVault.Shared.csproj" />
   </ItemGroup>
 
 </Project>

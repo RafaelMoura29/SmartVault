@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<businessObject>
+	<propertyGroup>
+		<property name="ClientId" type="string" />
+		<property name="ProviderName" type="string" />
+		<property name="ClientSecret" type="string" />
+		<property name="AuthorizationUrl" type="string" />
+		<property name="TokenUrl" type="string" />
+		<property name="RedirectUrl" type="string" />
+	</propertyGroup>
+	<script>
+		CREATE TABLE OauthConfig (
+			ClientId TEXT PRIMARY KEY,
+			ProviderName TEXT,
+			ClientSecret TEXT,
+			AuthorizationUrl TEXT,
+			TokenUrl TEXT,
+			RedirectUrl TEXT
+		);
+	</script>
+</businessObject>
